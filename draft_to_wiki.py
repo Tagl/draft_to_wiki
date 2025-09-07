@@ -36,7 +36,11 @@ if __name__ == "__main__":
     blue_bans = get_bans_from_row(blue_bans_row)
     red_bans = get_bans_from_row(red_bans_row)
 
-    output = f"""{{PicksAndBansS7|team1= |team2= |team1score= |team2score= |winner= 
+    team_names = parser.find_all(class_="roomTeamName")
+    blue_team_name = team_names[0].get_text()
+    red_team_name = team_names[1].get_text()
+
+    output = f"""{{PicksAndBansS7|team1={blue_team_name} |team2={red_team_name} |team1score= |team2score= |winner= 
 |blueban1={blue_bans[0]}     |red_ban1={red_bans[0]}
 |blueban2={blue_bans[1]}     |red_ban2={red_bans[1]}
 |blueban3={blue_bans[2]}     |red_ban3={red_bans[2]}
