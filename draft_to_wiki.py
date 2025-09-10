@@ -12,6 +12,26 @@ def get_bans_from_row(row):
         x.find("img", alt=True)["alt"] for x in row.find_all(class_="banChampContainer")
     ]
 
+def get_order(blue_bans, red_bans, blue_picks, red_picks):
+    order = []
+    for i in range(3):
+        order.append(blue_bans[i])
+        order.append(red_bans[i])
+    order.append(blue_picks[0])
+    order.append(red_picks[0])
+    order.append(red_picks[1])
+    order.append(blue_picks[1])
+    order.append(blue_picks[2])
+    order.append(red_picks[2])
+    for i in range(3, 5):
+        order.append(red_bans[i])
+        order.append(blue_bans[i])
+    order.append(red_picks[3])
+    order.append(blue_picks[3])
+    order.append(blue_picks[4])
+    order.append(red_picks[4])
+    return order
+
 
 if __name__ == "__main__":
     argparser = argparse.ArgumentParser(
@@ -19,6 +39,7 @@ if __name__ == "__main__":
         description="Takes as input a URL to draftlol.dawe.gg and converts the pick/ban process to the wiki format.",
     )
     argparser.add_argument("url")
+    argparser.add_argument("--csv", action="store_true")
     args = argparser.parse_args()
 
     sess = requests_html.HTMLSession()
@@ -40,7 +61,10 @@ if __name__ == "__main__":
     blue_team_name = team_names[0].get_text()
     red_team_name = team_names[1].get_text()
 
-    output = f"""{{PicksAndBansS7|team1={blue_team_name} |team2={red_team_name} |team1score= |team2score= |winner= 
+    if args.csv:
+        output = ','.join(get_order(blue_bans, red_bans, blue_picks, red_picks))
+    else:
+        output = f"""{{PicksAndBansS7|team1={blue_team_name} |team2={red_team_name} |team1score= |team2score= |winner= 
 |blueban1={blue_bans[0]}     |red_ban1={red_bans[0]}
 |blueban2={blue_bans[1]}     |red_ban2={red_bans[1]}
 |blueban3={blue_bans[2]}     |red_ban3={red_bans[2]}
