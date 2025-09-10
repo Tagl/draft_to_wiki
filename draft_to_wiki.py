@@ -12,6 +12,7 @@ def get_bans_from_row(row):
         x.find("img", alt=True)["alt"] for x in row.find_all(class_="banChampContainer")
     ]
 
+
 def get_order(blue_bans, red_bans, blue_picks, red_picks):
     order = []
     for i in range(3):
@@ -62,7 +63,7 @@ if __name__ == "__main__":
     red_team_name = team_names[1].get_text()
 
     if args.csv:
-        output = ','.join(get_order(blue_bans, red_bans, blue_picks, red_picks))
+        output = ",".join(get_order(blue_bans, red_bans, blue_picks, red_picks))
     else:
         output = f"""{{PicksAndBansS7|team1={blue_team_name} |team2={red_team_name} |team1score= |team2score= |winner= 
 |blueban1={blue_bans[0]}     |red_ban1={red_bans[0]}
