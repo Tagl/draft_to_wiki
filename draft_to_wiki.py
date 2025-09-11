@@ -28,8 +28,8 @@ class DraftData:
 
 def parse_draftlol(parser):
     team_names = parser.find_all(class_="roomTeamName")
-    blue_team_name = team_names[0].get_text()
-    red_team_name = team_names[1].get_text()
+    blue_team_name = team_names[0].get_text().strip()
+    red_team_name = team_names[1].get_text().strip()
 
     blue_picks_column = parser.find(class_="roomPickColumn blue")
     red_picks_column = parser.find(class_="roomPickColumn red")
@@ -93,7 +93,8 @@ if __name__ == "__main__":
     if args.csv:
         output = ",".join(get_order(draft))
     else:
-        output = f"""{{{{PicksAndBansS7|team1={draft.blue.name} |team2={draft.red.name} |team1score= |team2score= |winner= 
+        output = f"""{{{{PicksAndBansS7|team1={draft.blue.name} |team2={draft.red.name}
+|team1score= |team2score= |winner= 
 |blueban1={draft.blue.bans[0]}     |red_ban1={draft.red.bans[0]}
 |blueban2={draft.blue.bans[1]}     |red_ban2={draft.red.bans[1]}
 |blueban3={draft.blue.bans[2]}     |red_ban3={draft.red.bans[2]}
