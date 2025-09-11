@@ -2,6 +2,8 @@ import argparse
 import bs4
 import requests_html
 
+DRAFTLOL = "draftlol.dawe.gg"
+DRAFTERLOL = "drafter.lol"
 
 def get_picks_from_column(column):
     return [x.get_text() for x in column.find_all(class_="roomChampName")]
@@ -12,27 +14,54 @@ def get_bans_from_row(row):
         x.find("img", alt=True)["alt"] for x in row.find_all(class_="banChampContainer")
     ]
 
+class TeamDraftData:
+    def __init__(self, name: str, bans: list[str], picks: list[str]):
+        self.name = name
+        self.bans = bans
+        self.picks = picks
 
-def get_order(blue_bans, red_bans, blue_picks, red_picks):
+class DraftData:
+    def __init__(self, blue: TeamDraftData, red: TeamDraftData):
+        self.blue = blue
+        self.red = red
+
+
+def parse_draftlol(parser):
+    team_names = parser.find_all(class_="roomTeamName")
+    blue_team_name = team_names[0].get_text()
+    red_team_name = team_names[1].get_text()
+
+    blue_picks_column = parser.find(class_="roomPickColumn blue")
+    red_picks_column = parser.find(class_="roomPickColumn red")
+    blue_bans_row = parser.find(class_="roomBanRow blue")
+    red_bans_row = parser.find(class_="roomBanRow red")
+
+    blue_team = TeamDraftData(blue_team_name, get_picks_from_column(blue_picks_column), get_bans_from_row(blue_bans_row))
+    red_team = TeamDraftData(red_team_name, get_picks_from_column(red_picks_column), get_bans_from_row(red_bans_row))
+
+    return DraftData(blue_team, red_team)
+
+
+
+def get_order(draft: DraftData):
     order = []
     for i in range(3):
-        order.append(blue_bans[i])
-        order.append(red_bans[i])
-    order.append(blue_picks[0])
-    order.append(red_picks[0])
-    order.append(red_picks[1])
-    order.append(blue_picks[1])
-    order.append(blue_picks[2])
-    order.append(red_picks[2])
+        order.append(draft.blue.bans[i])
+        order.append(draft.red.bans[i])
+    order.append(draft.blue.picks[0])
+    order.append(draft.red.picks[0])
+    order.append(draft.red.picks[1])
+    order.append(draft.blue.picks[1])
+    order.append(draft.blue.picks[2])
+    order.append(draft.red.picks[2])
     for i in range(3, 5):
-        order.append(red_bans[i])
-        order.append(blue_bans[i])
-    order.append(red_picks[3])
-    order.append(blue_picks[3])
-    order.append(blue_picks[4])
-    order.append(red_picks[4])
+        order.append(draft.red.bans[i])
+        order.append(draft.blue.bans[i])
+    order.append(draft.red.picks[3])
+    order.append(draft.blue.picks[3])
+    order.append(draft.blue.picks[4])
+    order.append(draft.red.picks[4])
     return order
-
 
 if __name__ == "__main__":
     argparser = argparse.ArgumentParser(
@@ -43,44 +72,37 @@ if __name__ == "__main__":
     argparser.add_argument("--csv", action="store_true")
     args = argparser.parse_args()
 
+    url = args.url
     sess = requests_html.HTMLSession()
-    r = sess.get(args.url)
+    r = sess.get(url)
     r.html.render(sleep=1)
 
     parser = bs4.BeautifulSoup(r.html.html, "html.parser")
-    blue_picks_column = parser.find(class_="roomPickColumn blue")
-    red_picks_column = parser.find(class_="roomPickColumn red")
-    blue_bans_row = parser.find(class_="roomBanRow blue")
-    red_bans_row = parser.find(class_="roomBanRow red")
 
-    blue_picks = get_picks_from_column(blue_picks_column)
-    red_picks = get_picks_from_column(red_picks_column)
-    blue_bans = get_bans_from_row(blue_bans_row)
-    red_bans = get_bans_from_row(red_bans_row)
-
-    team_names = parser.find_all(class_="roomTeamName")
-    blue_team_name = team_names[0].get_text()
-    red_team_name = team_names[1].get_text()
+    if DRAFTLOL in url:
+        draft = parse_draftlol(parser)
+    else:
+        raise NotImplemented
 
     if args.csv:
-        output = ",".join(get_order(blue_bans, red_bans, blue_picks, red_picks))
+        output = ",".join(get_order(draft))
     else:
-        output = f"""{{PicksAndBansS7|team1={blue_team_name} |team2={red_team_name} |team1score= |team2score= |winner= 
-|blueban1={blue_bans[0]}     |red_ban1={red_bans[0]}
-|blueban2={blue_bans[1]}     |red_ban2={red_bans[1]}
-|blueban3={blue_bans[2]}     |red_ban3={red_bans[2]}
-|bluepick1={blue_picks[0]}     |bluerole1=
-                                           |red_pick1={red_picks[0]}    |red_role1=
-                                           |red_pick2={red_picks[1]}    |red_role2=
-|bluepick2={blue_picks[1]}     |bluerole2=
-|bluepick3={blue_picks[2]}     |bluerole3=
-                                           |red_pick3={red_picks[2]}    |red_role3=
-|blueban4={blue_bans[3]}     |red_ban4={red_bans[3]}
-|blueban5={blue_bans[4]}     |red_ban5={red_bans[4]}
-                                           |red_pick4={red_picks[3]}    |red_role4=
-|bluepick4={blue_picks[3]}     |bluerole4=
-|bluepick5={blue_picks[4]}     |bluerole5=
-                                           |red_pick5={red_picks[4]}    |red_role5=
-|game1=yes}}"""
+        output = f"""{{{{PicksAndBansS7|team1={draft.blue.name} |team2={draft.red.name} |team1score= |team2score= |winner= 
+|blueban1={draft.blue.bans[0]}     |red_ban1={draft.red.bans[0]}
+|blueban2={draft.blue.bans[1]}     |red_ban2={draft.red.bans[1]}
+|blueban3={draft.blue.bans[2]}     |red_ban3={draft.red.bans[2]}
+|bluepick1={draft.blue.picks[0]}     |bluerole1=
+                                           |red_pick1={draft.red.picks[0]}    |red_role1=
+                                           |red_pick2={draft.red.picks[1]}    |red_role2=
+|bluepick2={draft.blue.picks[1]}     |bluerole2=
+|bluepick3={draft.blue.picks[2]}     |bluerole3=
+                                           |red_pick3={draft.red.picks[2]}    |red_role3=
+|blueban4={draft.blue.bans[3]}     |red_ban4={draft.red.bans[3]}
+|blueban5={draft.blue.bans[4]}     |red_ban5={draft.red.bans[4]}
+                                           |red_pick4={draft.red.picks[3]}    |red_role4=
+|bluepick4={draft.blue.picks[3]}     |bluerole4=
+|bluepick5={draft.blue.picks[4]}     |bluerole5=
+                                           |red_pick5={draft.red.picks[4]}    |red_role5=
+|game1=yes}}}}"""
 
     print(output)
