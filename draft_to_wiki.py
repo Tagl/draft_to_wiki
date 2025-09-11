@@ -5,6 +5,9 @@ import requests_html
 DRAFTLOL = "draftlol.dawe.gg"
 DRAFTERLOL = "drafter.lol"
 
+BLUE_TEAM = ["b", "blue", "left"]
+RED_TEAM = ["r", "red", "right"]
+
 
 def get_picks_from_column(column):
     return [x.get_text() for x in column.find_all(class_="roomChampName")]
@@ -86,6 +89,7 @@ if __name__ == "__main__":
     )
     argparser.add_argument("url")
     argparser.add_argument("--csv", action="store_true")
+    argparser.add_argument("-w", "--winner")
     args = argparser.parse_args()
 
     url = args.url
@@ -103,8 +107,23 @@ if __name__ == "__main__":
     if args.csv:
         output = ",".join(get_order(draft))
     else:
+        team_1_score = ""
+        team_2_score = ""
+        winner = ""
+        if args.winner is not None:
+            if args.winner.lower() in BLUE_TEAM:
+                team_1_score = 1
+                team_2_score = 0
+                winner = 1
+            elif args.winner.lower() in RED_TEAM:
+                team_1_score = 0
+                team_2_score = 1
+                winner = 2
+            else:
+                raise ValueError
+
         output = f"""{{{{PicksAndBansS7|team1={draft.blue.name} |team2={draft.red.name}
-|team1score= |team2score= |winner=
+|team1score={team_1_score} |team2score={team_2_score} |winner={winner}
 |blueban1={draft.blue.bans[0]}     |red_ban1={draft.red.bans[0]}
 |blueban2={draft.blue.bans[1]}     |red_ban2={draft.red.bans[1]}
 |blueban3={draft.blue.bans[2]}     |red_ban3={draft.red.bans[2]}
