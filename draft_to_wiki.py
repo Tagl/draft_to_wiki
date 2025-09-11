@@ -20,6 +20,7 @@ def get_bans_from_row(row):
             result.append("None")
     return result
 
+
 class TeamDraftData:
     def __init__(self, name: str, bans: list[str], picks: list[str]):
         self.name = name
