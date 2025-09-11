@@ -11,10 +11,14 @@ def get_picks_from_column(column):
 
 
 def get_bans_from_row(row):
-    return [
-        x.find("img", alt=True)["alt"] for x in row.find_all(class_="banChampContainer")
-    ]
-
+    result = []
+    for x in row.find_all(class_="banChampContainer"):
+        image = x.find("img", alt=True)
+        if image is not None:
+            result.append(image["alt"])
+        else:
+            result.append("None")
+    return result
 
 class TeamDraftData:
     def __init__(self, name: str, bans: list[str], picks: list[str]):
