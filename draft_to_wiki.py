@@ -36,8 +36,14 @@ def parse_draftlol(parser):
     blue_bans_row = parser.find(class_="roomBanRow blue")
     red_bans_row = parser.find(class_="roomBanRow red")
 
-    blue_team = TeamDraftData(blue_team_name, get_picks_from_column(blue_picks_column), get_bans_from_row(blue_bans_row))
-    red_team = TeamDraftData(red_team_name, get_picks_from_column(red_picks_column), get_bans_from_row(red_bans_row))
+    blue_team = TeamDraftData(blue_team_name, 
+        get_bans_from_row(blue_bans_row),
+        get_picks_from_column(blue_picks_column)
+    )
+    red_team = TeamDraftData(red_team_name,
+        get_bans_from_row(red_bans_row),
+        get_picks_from_column(red_picks_column)
+    )
 
     return DraftData(blue_team, red_team)
 
