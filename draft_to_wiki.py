@@ -5,6 +5,7 @@ import requests_html
 DRAFTLOL = "draftlol.dawe.gg"
 DRAFTERLOL = "drafter.lol"
 
+
 def get_picks_from_column(column):
     return [x.get_text() for x in column.find_all(class_="roomChampName")]
 
@@ -14,11 +15,13 @@ def get_bans_from_row(row):
         x.find("img", alt=True)["alt"] for x in row.find_all(class_="banChampContainer")
     ]
 
+
 class TeamDraftData:
     def __init__(self, name: str, bans: list[str], picks: list[str]):
         self.name = name
         self.bans = bans
         self.picks = picks
+
 
 class DraftData:
     def __init__(self, blue: TeamDraftData, red: TeamDraftData):
@@ -36,17 +39,18 @@ def parse_draftlol(parser):
     blue_bans_row = parser.find(class_="roomBanRow blue")
     red_bans_row = parser.find(class_="roomBanRow red")
 
-    blue_team = TeamDraftData(blue_team_name, 
+    blue_team = TeamDraftData(
+        blue_team_name,
         get_bans_from_row(blue_bans_row),
-        get_picks_from_column(blue_picks_column)
+        get_picks_from_column(blue_picks_column),
     )
-    red_team = TeamDraftData(red_team_name,
+    red_team = TeamDraftData(
+        red_team_name,
         get_bans_from_row(red_bans_row),
-        get_picks_from_column(red_picks_column)
+        get_picks_from_column(red_picks_column),
     )
 
     return DraftData(blue_team, red_team)
-
 
 
 def get_order(draft: DraftData):
@@ -69,6 +73,7 @@ def get_order(draft: DraftData):
     order.append(draft.red.picks[4])
     return order
 
+
 if __name__ == "__main__":
     argparser = argparse.ArgumentParser(
         prog="Draft To Wiki",
@@ -88,13 +93,13 @@ if __name__ == "__main__":
     if DRAFTLOL in url:
         draft = parse_draftlol(parser)
     else:
-        raise NotImplemented
+        raise NotImplementedError
 
     if args.csv:
         output = ",".join(get_order(draft))
     else:
         output = f"""{{{{PicksAndBansS7|team1={draft.blue.name} |team2={draft.red.name}
-|team1score= |team2score= |winner= 
+|team1score= |team2score= |winner=
 |blueban1={draft.blue.bans[0]}     |red_ban1={draft.red.bans[0]}
 |blueban2={draft.blue.bans[1]}     |red_ban2={draft.red.bans[1]}
 |blueban3={draft.blue.bans[2]}     |red_ban3={draft.red.bans[2]}
