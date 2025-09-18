@@ -2,85 +2,14 @@ import argparse
 import bs4
 import requests_html
 
+from draftlol import parse_draftlol
+from drafterlol import parse_drafterlol
+
 DRAFTLOL = "draftlol.dawe.gg"
 DRAFTERLOL = "drafter.lol"
 
 BLUE_TEAM = ["b", "blue", "left"]
 RED_TEAM = ["r", "red", "right"]
-
-
-def get_picks_from_column(column):
-    return [x.get_text() for x in column.find_all(class_="roomChampName")]
-
-
-def get_bans_from_row(row):
-    result = []
-    for x in row.find_all(class_="banChampContainer"):
-        image = x.find("img", alt=True)
-        if image is not None:
-            result.append(image["alt"])
-        else:
-            result.append("None")
-    return result
-
-
-class TeamDraftData:
-    def __init__(self, name: str, bans: list[str], picks: list[str]):
-        self.name = name
-        self.bans = bans
-        self.picks = picks
-
-
-class DraftData:
-    def __init__(self, blue: TeamDraftData, red: TeamDraftData):
-        self.blue = blue
-        self.red = red
-
-
-def parse_draftlol(parser):
-    team_names = parser.find_all(class_="roomTeamName")
-    blue_team_name = team_names[0].get_text().strip()
-    red_team_name = team_names[1].get_text().strip()
-
-    blue_picks_column = parser.find(class_="roomPickColumn blue")
-    red_picks_column = parser.find(class_="roomPickColumn red")
-    blue_bans_row = parser.find(class_="roomBanRow blue")
-    red_bans_row = parser.find(class_="roomBanRow red")
-
-    blue_team = TeamDraftData(
-        blue_team_name,
-        get_bans_from_row(blue_bans_row),
-        get_picks_from_column(blue_picks_column),
-    )
-    red_team = TeamDraftData(
-        red_team_name,
-        get_bans_from_row(red_bans_row),
-        get_picks_from_column(red_picks_column),
-    )
-
-    return DraftData(blue_team, red_team)
-
-
-def get_order(draft: DraftData):
-    order = []
-    for i in range(3):
-        order.append(draft.blue.bans[i])
-        order.append(draft.red.bans[i])
-    order.append(draft.blue.picks[0])
-    order.append(draft.red.picks[0])
-    order.append(draft.red.picks[1])
-    order.append(draft.blue.picks[1])
-    order.append(draft.blue.picks[2])
-    order.append(draft.red.picks[2])
-    for i in range(3, 5):
-        order.append(draft.red.bans[i])
-        order.append(draft.blue.bans[i])
-    order.append(draft.red.picks[3])
-    order.append(draft.blue.picks[3])
-    order.append(draft.blue.picks[4])
-    order.append(draft.red.picks[4])
-    return order
-
 
 if __name__ == "__main__":
     argparser = argparse.ArgumentParser(
@@ -101,11 +30,13 @@ if __name__ == "__main__":
 
     if DRAFTLOL in url:
         draft = parse_draftlol(parser)
+    elif DRAFTERLOL in url:
+        draft = parse_drafterlol(parser)
     else:
         raise NotImplementedError
 
     if args.csv:
-        output = ",".join(get_order(draft))
+        output = ",".join(draft.get_order())
     else:
         team_1_score = ""
         team_2_score = ""
