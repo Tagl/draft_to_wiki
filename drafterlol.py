@@ -46,7 +46,7 @@ def parse_drafterlol(parser) -> DraftData:
 
     red_team = TeamDraftData(
         red_team_name,
-        get_bans_from_drafterlol_row(red_bans_row),
+        list(reversed(get_bans_from_drafterlol_row(red_bans_row))),
         get_picks_from_drafterlol_column(red_picks_column),
     )
 
